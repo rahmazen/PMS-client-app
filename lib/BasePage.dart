@@ -4,22 +4,7 @@ import 'package:clienthotelapp/ProfilePage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: BasePage(),
-    );
-  }
-}
+import 'Services.dart';
 
 class BasePage extends StatefulWidget {
   @override
@@ -84,24 +69,33 @@ class _BasePageState extends State<BasePage> {
                         // Add your QR scanner functionality here
                         // launchQRScanner();
                       },
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.blueGrey[600],
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.blueGrey.withOpacity(0.3),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.qr_code_2_rounded,
-                          color: Colors.white,
-                          size: 28,
+                      child: GestureDetector(
+                        onTap: () {
+                          // Navigate to EditProfilePage
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ClientRoomPage()),
+                          );
+                        },
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.blueGrey,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blueGrey.withOpacity(0.3),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child:  Icon(
+                            Icons.qr_code_2_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                       ),
                     ),
@@ -149,15 +143,6 @@ class _BasePageState extends State<BasePage> {
   }
 }
 
-
-class CalendarPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Calendar Page'),
-    );
-  }
-}
 
 class FavoritesPage extends StatelessWidget {
   @override

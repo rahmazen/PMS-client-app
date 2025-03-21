@@ -14,7 +14,9 @@ import 'package:clienthotelapp/RoomSelection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'BookingHistoryPage.dart';
+import 'Services.dart';
 import 'SignIn.dart';
 import 'SplashScreen.dart';
 import 'HotelRoom.dart';
@@ -33,6 +35,9 @@ class MyApp extends StatelessWidget {
       title: 'Hotel App',
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
+        textTheme: GoogleFonts.nunitoTextTheme(
+          Theme.of(context).textTheme
+        )
       ),
       home: BasePage()
     );

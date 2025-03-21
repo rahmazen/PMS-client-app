@@ -2,9 +2,31 @@ import 'package:clienthotelapp/SignIn.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:math';
 
 class HotelHomePage extends StatelessWidget {
   const HotelHomePage({Key? key}) : super(key: key);
+
+  void _openMap(String place) async {
+    String googleMapsUrl = Uri.encodeFull("https://www.google.com/maps/search/?api=1&query=$place");
+    if (await canLaunch(googleMapsUrl)) {
+      await launch(googleMapsUrl);
+    } else {
+      throw "Could not open the map.";
+    }
+  }
+  Future<void> _openGoogleMaps(double latitude, double longitude) async {
+    final Uri googleMapsUrl = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude",
+    );
+
+    if (await canLaunchUrl(googleMapsUrl)) {
+      await launchUrl(googleMapsUrl);
+    } else {
+      throw "Could not launch $googleMapsUrl";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,11 +280,22 @@ class HotelHomePage extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.only(left: 20),
                   children: [
-                    _buildNearbyPlaceCard("Beach Club", "0.5 km", Icons.beach_access),
-                    _buildNearbyPlaceCard("Shopping Mall", "1.2 km", Icons.shopping_bag),
-                    _buildNearbyPlaceCard("Art Museum", "2.0 km", Icons.museum),
-                    _buildNearbyPlaceCard("National Park", "5.5 km", Icons.park),
-                  ],
+                    GestureDetector(
+                      onTap: () => _openGoogleMaps(21.2791, -157.8375), // Waikiki Beach
+                      child: _buildNearbyPlaceCard("Beach Club", "0.5 km", Icons.beach_access),
+                    ),
+      GestureDetector(
+        onTap: () => _openGoogleMaps(34.0522, -118.2437), // Los Angeles (example)
+        child: _buildNearbyPlaceCard("Shopping Mall", "1.2 km", Icons.shopping_bag),
+      ),
+      GestureDetector(
+        onTap: () => _openGoogleMaps(40.7794, -73.9632), // Metropolitan Museum of Art
+        child: _buildNearbyPlaceCard("Art Museum", "2.0 km", Icons.museum),
+      ),
+      GestureDetector(
+        onTap: () => _openGoogleMaps(37.7749, -122.4194), // Golden Gate Park
+        child: _buildNearbyPlaceCard("National Park", "5.5 km", Icons.park),
+      ), ],
                 ),
               ),
 

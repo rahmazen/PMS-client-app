@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'RestaurantPage.dart';
+
 
 class ClientRoomPage extends StatefulWidget {
   @override
@@ -131,12 +133,60 @@ class _ClientRoomPageState extends State<ClientRoomPage> {
             ),
 
             // Service Cards
-            ServiceCard(
-              icon: Icons.room_service,
-              title: "Room Service",
-              description: "Order food & beverages directly to your room",
-              onTap: () => _showRoomServiceModal(context),
+
+            // container for rooom service
+            GestureDetector(
+              onTap: () {
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RestaurantPage()),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blueGrey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.room_service_rounded,
+                      size: 36,
+                      color: Colors.blueGrey[700],
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Room Service',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueGrey[800],
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'description',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blueGrey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
+
             SizedBox(height: 16),
             ServiceCard(
               icon: Icons.local_laundry_service,

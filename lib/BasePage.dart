@@ -81,7 +81,7 @@ class _BasePageState extends State<BasePage> {
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: Colors.blueGrey,
+                            color: Colors.indigo,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(

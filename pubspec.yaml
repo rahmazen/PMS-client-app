@@ -51,6 +51,7 @@ dependencies:
   intl: ^0.18.1
   table_calendar: ^3.0.9
   intl_phone_field: ^3.2.0
+
   
 
 
@@ -64,6 +65,13 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  http: ^1.3.0
+  shared_preferences: ^2.4.9
+  image_picker: ^1.0.7  # For selecting images from gallery or camera
+  dio: ^5.4.0           # For making HTTP requests and FormData
+  http_parser: ^4.0.2   # For setting MIME types for multipart requests
+  path: ^1.8.3
+  path_provider: ^2.0.15
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

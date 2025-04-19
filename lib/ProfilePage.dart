@@ -1,24 +1,80 @@
+import 'dart:ui';
+
+import 'package:clienthotelapp/SignIn.dart';
+import 'package:clienthotelapp/providers/authProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import 'BookingHistoryPage.dart';
 import 'EditProfile.dart';
+import 'api.dart';
 
 
 
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Delay to safely access context
+    Future.microtask(() {
+      final auth = context.read<AuthProvider>();
+      if (auth.authData == null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => SignInScreen()),
+        );
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
+    // Optional: redirect to login if authData is null
+    if (authProvider.authData == null) {
+      Future.microtask(() {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => SignInScreen()),
+        );
+      });
+      return SizedBox(); // avoid building the rest of the widget
+    }
+
     return Scaffold(
       body: Stack(
         children: [
           Column(
             children: [
-              Container(
+              SizedBox(
                 height: 250,
-                color: Colors.blueGrey,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Profile background image
+                    Image.network(
+                      '${Api.url}${authProvider.authData!.image}',
+                      fit: BoxFit.cover,
+                    ),
+                    // Blur effect
+                    BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.3), // Optional dimming
+                      ),
+                    ),
+                  ],
+                ),
               ),
+
               Expanded(
                 child: Container(
                   color: Colors.white,
@@ -46,11 +102,19 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 children: [
                   SizedBox(height: 40),
+
                   Text(
-                    'Rahma Zen',
+                    authProvider.authData!.fullname,
                     style: GoogleFonts.nunito(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    authProvider.authData!.username,
+                    style: GoogleFonts.nunito(
+                      fontSize: 16,
+                     color:Colors.black26
                     ),
                   ),
                   SizedBox(height: 10),
@@ -84,7 +148,7 @@ class ProfilePage extends StatelessWidget {
             left: MediaQuery.of(context).size.width / 2 - 40,
             child: CircleAvatar(
               radius: 40,
-              backgroundImage: AssetImage('assets/images/backgound2.jpg'),
+              backgroundImage: NetworkImage('${Api.url}${authProvider.authData!.image}'),
               backgroundColor: Colors.blueGrey[600],
             ),
           ),

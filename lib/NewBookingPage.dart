@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:clienthotelapp/BookingScreen.dart';
 import 'package:clienthotelapp/RoomListingPage.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+
+import 'api.dart';
 
 class RoomBookingPage extends StatefulWidget {
   @override
@@ -22,43 +26,19 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
   List<String> selectedAmenities = [];
 
   // Sample data
-  final List<RoomType> roomTypes = [
-    RoomType(
-      id: 'standard',
-      name: 'Standard Room',
-      description: 'Comfortable room with basic amenities',
-      price: 99,
-      image: 'assets/images/standard_room.jpg',
-      maxOccupancy: 2,
-    ),
-    RoomType(
-      id: 'deluxe',
-      name: 'Deluxe Room',
-      description: 'Spacious room with premium amenities',
-      price: 149,
-      image: 'assets/images/deluxe_room.jpg',
-      maxOccupancy: 3,
-    ),
-    RoomType(
-      id: 'suite',
-      name: 'Executive Suite',
-      description: 'Luxury suite with separate living area',
-      price: 249,
-      image: 'assets/images/suite.jpg',
-      maxOccupancy: 4,
-    ),
+   List<dynamic> roomTypes = [
+     { 'id': 'loading...',
+       'name': 'loading...',
+       'description': 'loading...',
+       'price': 00,
+       'image': 'images/1.jpg',
+       'maxOccupancy': 4,}
+
   ];
 
-  final List<String> amenities = [
-    'Breakfast',
-    'WiFi',
-    'Swimming Pool',
-    'Gym',
-    'Spa',
-    'Airport Transfer',
-    'Parking',
-    'Room Service',
-    'Laundry',
+  final List<dynamic> amenities = [
+    {1, 'loading...'},
+    {2, 'loading...'},
 
   ];
 
@@ -100,6 +80,60 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
     });
   }
 
+  Future<void> fetchAmenities() async{
+    try {
+      print('we are in fetch amenities');
+      final response = await http.get(Uri.parse('${Api.url}/backend/receptionist/amenities/'));
+      print(response.body);
+      if (response.statusCode == 200) {
+        setState(() {
+          selectedAmenities = json.decode(response.body);
+        });
+
+        print('Data: $selectedAmenities');
+        // Do something with the data
+      } else {
+        print('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+
+  Future<void> getRooms() async{
+    try {
+      print('we are in fetch getRooms');
+      final response = await http.get(Uri.parse('${Api.url}/backend/receptionist/availableRooms/').replace(
+        queryParameters: {
+          'checkin': checkInDate,
+          'checkout': checkOutDate,
+          'amenities': selectedAmenities.join(',')
+        },
+      ),);
+
+          print(response.body);
+      if (response.statusCode == 200) {
+        setState(() {
+          roomTypes = json.decode(response.body);
+        });
+
+      } else {
+        print('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+
+
+  @override
+  void initState(){
+    super.initState();
+    fetchAmenities();
+    getRooms();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +196,6 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
             ),
             Container(
               decoration: BoxDecoration(
-
                 borderRadius: BorderRadius.circular(12),
                 color: Colors.white,
                 boxShadow: [
@@ -946,20 +979,3 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
   }
 }
 
-class RoomType {
-  final String id;
-  final String name;
-  final String description;
-  final int price;
-  final String image;
-  final int maxOccupancy;
-
-  RoomType({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.image,
-    required this.maxOccupancy,
-  });
-}

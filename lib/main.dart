@@ -16,10 +16,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'BookingHistoryPage.dart';
+import 'ServiceDetailPage.dart';
 import 'Services.dart';
 import 'SignIn.dart';
 import 'SplashScreen.dart';
 import 'HotelRoom.dart';
+import 'package:provider/provider.dart';
+import 'providers/authProvider.dart';
+import 'providers/roomProvider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,8 +33,13 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return GetMaterialApp(
+  Widget build(BuildContext context)  {
+     return MultiProvider(
+        providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+   // ChangeNotifierProvider(create: (_) => RoomProvider()),
+    ],
+    child: GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Hotel App',
       theme: ThemeData(
@@ -39,7 +48,8 @@ class MyApp extends StatelessWidget {
           Theme.of(context).textTheme
         )
       ),
-      home: BasePage()
+      home: RoomBookingPage()
+    ),
     );
   }
 }

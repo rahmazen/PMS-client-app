@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
+import 'CheckoutPage.dart';
+import 'HotelBookingPage.dart';
 import 'NewBookingPage.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -610,14 +612,13 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
 
                  SizedBox(height: 16),
-
                 // Continue Button
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => BasePage()),
+                      MaterialPageRoute(builder: (context) => HotelRoomBookingPage()),
                     );
-                  },
+                    },
                   child:  Text(
                     'Confirm',
                     style: GoogleFonts.nunito(

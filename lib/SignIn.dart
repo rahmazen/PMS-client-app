@@ -1,9 +1,93 @@
+import 'dart:convert';
+import 'package:provider/provider.dart';
+import 'package:clienthotelapp/HotelHomePage.dart';
+import 'package:clienthotelapp/main.dart';
+import 'package:clienthotelapp/providers/authProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'BasePage.dart';
 import 'SignUp.dart';
+import 'package:http/http.dart' as http;
 
-class SignInScreen extends StatelessWidget {
+import 'api.dart';
+
+class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  // Controllers for text fields
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // State variables
+  bool _rememberMe = true;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> login() async {
+    // Validate inputs
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter both email and password')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.post(Uri.parse('${Api.url}/backend/token/'),
+        body: {
+          'username': _emailController.text,
+          'password': _passwordController.text,
+        },
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response.statusCode == 200) {
+        print(response.body);
+        if (mounted) {
+          final data = json.decode(response.body);
+          context.read<AuthProvider>().signIn(data);
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => BasePage())
+          );
+
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed: ${response.statusCode}')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +102,6 @@ class SignInScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 25,),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Row(
@@ -32,13 +115,21 @@ class SignInScreen extends StatelessWidget {
               SizedBox(height: screenHeight * 0.05),
               Text('Welcome back', style: GoogleFonts.nunito(fontSize: screenWidth * 0.06, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
               SizedBox(height: screenHeight * 0.02),
-              _buildTextField('Email', 'Enter your email', false, screenWidth),
+              _buildTextField('Email', 'Enter your email', false, screenWidth, _emailController),
               SizedBox(height: screenHeight * 0.02),
-              _buildTextField('Password', '••••••••••', true, screenWidth),
+              _buildTextField('Password', '••••••••••', true, screenWidth, _passwordController),
               SizedBox(height: screenHeight * 0.02),
               Row(
                 children: [
-                  Checkbox(value: true, onChanged: (val) {}, activeColor: Colors.blueGrey),
+                  Checkbox(
+                      value: _rememberMe,
+                      onChanged: (val) {
+                        setState(() {
+                          _rememberMe = val ?? true;
+                        });
+                      },
+                      activeColor: Colors.blueGrey
+                  ),
                   Text('Remember me', style: GoogleFonts.nunito(fontSize: screenWidth * 0.03, color: Colors.grey.shade700)),
                   Spacer(),
                   TextButton(
@@ -52,12 +143,26 @@ class SignInScreen extends StatelessWidget {
                 width: double.infinity,
                 height: screenHeight * 0.06,
                 child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey[600], shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                  child: Text('Sign In', style: GoogleFonts.nunito(fontSize: screenWidth * 0.04, color: Colors.white, fontWeight: FontWeight.bold)),
+                  onPressed: _isLoading ? null : login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueGrey[600],
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    disabledBackgroundColor: Colors.blueGrey[300],
+                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                    width: screenWidth * 0.05,
+                    height: screenWidth * 0.05,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : Text('Sign In', style: GoogleFonts.nunito(fontSize: screenWidth * 0.04, color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
               SizedBox(height: screenHeight * 0.02),
+              /*
               Center(child: Text('Sign in with', style: GoogleFonts.nunito(fontSize: screenWidth * 0.03, color: Colors.grey.shade600))),
               SizedBox(height: screenHeight * 0.02),
               Row(
@@ -72,6 +177,8 @@ class SignInScreen extends StatelessWidget {
                   _buildSocialButton(Icons.apple, Colors.black, screenWidth),
                 ],
               ),
+              */
+
               SizedBox(height: screenHeight * 0.02),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -117,13 +224,14 @@ class SignInScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, String hintText, bool isPassword, double screenWidth) {
+  Widget _buildTextField(String label, String hintText, bool isPassword, double screenWidth, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: GoogleFonts.nunito(fontSize: screenWidth * 0.03, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
         SizedBox(height: screenWidth * 0.01),
         TextField(
+          controller: controller,
           cursorColor: Colors.blueGrey,
           style: GoogleFonts.nunito(),
           obscureText: isPassword,

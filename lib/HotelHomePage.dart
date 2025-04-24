@@ -1,3 +1,4 @@
+import 'package:clienthotelapp/NewBookingPage.dart';
 import 'package:clienthotelapp/SignIn.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,9 +8,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'dart:convert';
 import 'package:http/http.dart' as http ;
+import 'RestaurantPage.dart';
 import 'RoomListingPage.dart';
 import 'ServiceDetailPage.dart';
 import 'api.dart';
+import 'Room.dart';
 
 
 
@@ -78,6 +81,7 @@ class _HotelHomePageState extends State<HotelHomePage> {
     super.initState();
     fetchEvents();
     fetchFacilities();
+    fetchRooms();
   }
   void _openMap(String place) async {
     String googleMapsUrl = Uri.encodeFull("https://www.google.com/maps/search/?api=1&query=$place");
@@ -161,7 +165,40 @@ Future<void> fetchFacilities() async {
     print('Error: $e');
   }
 }
+  List<Room> rooms = [];
 
+
+  Future<void> fetchRooms() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final response = await http.get(Uri.parse('${Api.url}/backend/hotel_admin/getRoom/'));
+
+      if (response.statusCode == 200) {
+        // Decode with utf8 to handle any special characters
+        final List<dynamic> jsonData = json.decode(utf8.decode(response.bodyBytes));
+        final List<Room> fetchedRooms = jsonData.map((data) => Room.fromJson(data)).toList();
+
+        setState(() {
+          rooms = fetchedRooms;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        print('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        print(e);
+      });
+      print('Error: $e');
+    }
+  }
 
 
   String formatEventDate(String dateString) {
@@ -378,10 +415,10 @@ Future<void> fetchFacilities() async {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildQuickAction(context ,Icons.hotel, "Rooms", Colors.blueGrey , () =>RoomListingPage()),
-                    _buildQuickAction(context ,Icons.restaurant, "Dining", Colors.blueGrey, () =>RoomListingPage()),
-                    _buildQuickAction(context ,Icons.spa, "Spa", Colors.blueGrey, () =>RoomListingPage()),
-                    _buildQuickAction(context, Icons.nature_people_rounded, "Garden", Colors.blueGrey, () =>RoomListingPage()),
+                    _buildQuickAction(context ,Icons.hotel, "Rooms", Colors.blueGrey , () =>RoomListingPage(rooms)),
+                    _buildQuickAction(context ,Icons.restaurant, "Dining", Colors.blueGrey, () =>RestaurantPage()),
+                    _buildQuickAction(context ,Icons.spa, "Spa", Colors.blueGrey, () =>RestaurantPage()),
+                    _buildQuickAction(context, Icons.nature_people_rounded, "Garden", Colors.blueGrey, () =>RestaurantPage()),
                   ],
                 ),
               ),
@@ -540,7 +577,7 @@ Future<void> fetchFacilities() async {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "WEEKEND SPECIAL",
+                              "NOVOTEL SPECIAL",
                               style: GoogleFonts.nunito(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -550,7 +587,7 @@ Future<void> fetchFacilities() async {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              "20% Off on Spa & Dining",
+                                "4000 DZD Only on All Inclusive",
                               style: GoogleFonts.nunito(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -564,12 +601,20 @@ Future<void> fetchFacilities() async {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(
-                                "Book Now",
-                                style: GoogleFonts.nunito(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueGrey.shade800,
+                              child: GestureDetector(
+                                onTap: (){
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => RoomBookingPage()),
+                                  );
+                                },
+                                child: Text(
+                                  "Book Now",
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueGrey.shade800,
+                                  ),
                                 ),
                               ),
                             ),

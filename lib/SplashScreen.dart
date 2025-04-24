@@ -70,20 +70,12 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Using a Container with gradient instead of a solid color background
       body: Container(
         decoration: BoxDecoration(
-          // Deep night blue gradient
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0B1033), // Deep night blue at top
-              Color(0xFF1F2F6A), // Medium blue
-              Color(0xFF2A4FA6), // Rich royal blue
-              Color(0xFF0F2362), // Deep navy blue at bottom
-            ],
-            stops: [0.0, 0.3, 0.6, 1.0],
-          ),
+          color: Color(0xFF0B1033),
+         
+
         ),
         child: Center(
           child: Column(
@@ -93,14 +85,14 @@ class _SplashScreenState extends State<SplashScreen>
                 animation: _controller,
                 builder: (context, child) {
                   // Clamp the opacity value to ensure it stays within the valid range
-                  final opacity = _fadeAnimation.value.clamp(0.3, 1.0);
+                  final opacity = _fadeAnimation.value.clamp(0.5, 1.0);
                   return Opacity(
                     opacity: opacity, // Apply clamped fade animation
                     child: Transform.scale(
                       scale: _scaleAnimation.value, // Apply scale animation
                       child: Container(
-                        height: 220,
-                        width: 220,
+                        height: 250,
+                        width: 250,
                         child: Center(
                           child: ColorFiltered(
                             colorFilter: ColorFilter.mode(

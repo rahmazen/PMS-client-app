@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'RoomListingPage.dart';
-
+import 'Room.dart';
 class RoomDetailPage extends StatefulWidget {
   final Room room;
 
@@ -342,7 +342,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
 
                       SizedBox(height: 40),
 
-                      /* Book now button
+                       // Book now button
                       Container(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -370,7 +370,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
                           ),
                         ),
                       ),
-*/
+
                       SizedBox(height: 20),
                     ],
                   ),

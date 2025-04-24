@@ -78,7 +78,6 @@ class AuthProvider with ChangeNotifier {
   Future<void> signIn(Map<String, dynamic> authData) async {
     _authData = AuthModel.fromJson(authData);
     _isAuthenticated = true;
-
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_data', json.encode(authData));
     notifyListeners();

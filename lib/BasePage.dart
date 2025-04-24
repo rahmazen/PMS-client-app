@@ -3,6 +3,7 @@ import 'package:clienthotelapp/NewBookingPage.dart';
 import 'package:clienthotelapp/ProfilePage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'HotelReviewPage.dart';
 import 'Services.dart';
 
 class BasePage extends StatefulWidget {
@@ -16,7 +17,7 @@ class _BasePageState extends State<BasePage> {
   final List<Widget> pages = [
     HotelHomePage(),
     RoomBookingPage(),
-    FavoritesPage(),
+    HotelReviewPage(),
     ProfilePage(),
   ];
 
@@ -102,7 +103,7 @@ class _BasePageState extends State<BasePage> {
                   // Right section
                   Row(
                     children: [
-                      buildNavItem(2, Icons.star_rounded, Icons.star_rounded, 'Favorites'),
+                      buildNavItem(2, Icons.star_rounded, Icons.star_rounded, 'Reviews'),
                       const SizedBox(width: 30),
                       buildNavItem(3, Icons.person, Icons.person, 'Profile'),
                     ],

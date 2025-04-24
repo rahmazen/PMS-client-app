@@ -299,7 +299,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      DateFormat('HH:00pm').format(checkInDate!),
+                                      '12:00am',
                                       style: GoogleFonts.nunito(
                                         fontSize: 14,
                                         color: Colors.blueGrey[500],
@@ -344,7 +344,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        DateFormat('HH:00pm').format(checkOutDate!),
+                                        '12:00am',
                                         style: GoogleFonts.nunito(
                                           fontSize: 14,
                                           color: Colors.blueGrey[500],
@@ -729,16 +729,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   ),
                 ],
               ),
+              /*
               child: SafeArea(
                 top: false,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Handle booking
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => BookingScreen(),
-                      ),
-                    );
+
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueGrey[800],
@@ -759,6 +755,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   ),
                 ),
               ),
+              
+               */
             ),
           ),
         ],

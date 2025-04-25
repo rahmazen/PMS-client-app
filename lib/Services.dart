@@ -1,6 +1,52 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Add this import
 
+class RoomAccessService {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  // Save room access details
+  Future<void> saveRoomAccess(String roomNumber, String reservationId, DateTime checkoutDate, {String? roomType}) async {
+    await _storage.write(key: 'room_number', value: roomNumber);
+    await _storage.write(key: 'reservation_id', value: reservationId);
+    await _storage.write(key: 'checkout_date', value: checkoutDate.toIso8601String());
+    if (roomType != null) {
+      await _storage.write(key: 'room_type', value: roomType);
+    }
+  }
+
+  // Get room details
+  Future<Map<String, String>> getRoomDetails() async {
+    final roomNumber = await _storage.read(key: 'room_number') ?? '';
+    final reservationId = await _storage.read(key: 'reservation_id') ?? '';
+    final roomType = await _storage.read(key: 'room_type') ?? 'Standard Room';
+
+    return {
+      'roomNumber': roomNumber,
+      'reservationId': reservationId,
+      'roomType': roomType,
+    };
+  }
+
+  // Check if access is expired
+  Future<bool> isAccessExpired() async {
+    final checkoutDateStr = await _storage.read(key: 'checkout_date');
+    if (checkoutDateStr == null) return true;
+
+    final checkoutDate = DateTime.parse(checkoutDateStr);
+    return DateTime.now().isAfter(checkoutDate);
+  }
+
+  // Clear access data
+  Future<void> clearAccess() async {
+    await _storage.delete(key: 'room_number');
+    await _storage.delete(key: 'reservation_id');
+    await _storage.delete(key: 'checkout_date');
+    await _storage.delete(key: 'room_type');
+  }
+}
 
 class ClientRoomPage extends StatefulWidget {
   @override
@@ -8,13 +54,43 @@ class ClientRoomPage extends StatefulWidget {
 }
 
 class _ClientRoomPageState extends State<ClientRoomPage> {
+  final RoomAccessService _roomService = RoomAccessService();
+
+  // Variables to store room data
+  String roomNumber = "";
+  String roomType = "";
+  String reservationId ='';
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoomData();
+  }
+
+  // Load room data from secure storage
+  Future<void> _loadRoomData() async {
+    final details = await _roomService.getRoomDetails();
+
+    setState(() {
+      roomNumber = details['roomNumber'] ?? "";
+      roomType = details['roomType'] ?? "";
+      roomType = details['reservationId'] ?? "";
+      isLoading = false;
+    });
+  }
+
   // Sample data
-  final String roomNumber = "304";
-  final String roomType = "Deluxe Mall View";
+  //final String roomNumber = "304";
+  //final String roomType = "Deluxe Mall View";
 
   @override
   Widget build(BuildContext context) {
+    if (roomNumber.isEmpty) {
+      return _buildTestSetupScreen();
+    }
     return Scaffold(
+
 
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -157,6 +233,116 @@ class _ClientRoomPageState extends State<ClientRoomPage> {
       ),
     );
   }
+
+  Widget _buildTestSetupScreen() {
+    final TextEditingController roomNumberController = TextEditingController();
+    final TextEditingController roomTypeController = TextEditingController(text: "Deluxe Mall View");
+    final TextEditingController daysController = TextEditingController(text: "3");
+    final TextEditingController reservationIdController = TextEditingController();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Set Test Room Access"),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              "Enter Room Details for Testing",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey[800],
+              ),
+            ),
+            SizedBox(height: 24),
+
+            // Room Number Field
+            TextField(
+              controller: roomNumberController,
+              decoration: InputDecoration(
+                labelText: "Room Number",
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 24),
+
+            // Room Number Field
+            TextField(
+              controller: reservationIdController,
+              decoration: InputDecoration(
+                labelText: "reservation Number",
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 16),
+
+
+            // Room Type Field
+            TextField(
+              controller: roomTypeController,
+              decoration: InputDecoration(
+                labelText: "Room Type",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Days Until Checkout Field
+            TextField(
+              controller: daysController,
+              decoration: InputDecoration(
+                labelText: "Days Until Checkout",
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 32),
+
+            // Set Room Access Button
+            ElevatedButton(
+              onPressed: () async {
+                if (roomNumberController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Please enter a room number")),
+                  );
+                  return;
+                }
+
+                // Calculate checkout date based on days entered
+                int days = int.tryParse(daysController.text) ?? 3;
+                DateTime checkoutDate = DateTime.now().add(Duration(days: days));
+
+                // Save room data to secure storage
+                await _roomService.saveRoomAccess(
+                  roomNumberController.text,
+                  reservationIdController.text, // Generate a test reservation ID
+                  checkoutDate,
+                  roomType: roomTypeController.text,
+                );
+
+                // Reload the page with the new data
+                _loadRoomData();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueGrey[700],
+                padding: EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: Text(
+                "Set Room Access",
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   void _showRoomServiceModal(BuildContext context) {
     showModalBottomSheet(
@@ -654,14 +840,15 @@ class _MaintenanceServiceModalState extends State<MaintenanceServiceModal> {
   final List<String> issueTypes = [
     "Plumbing",
     "Electrical",
-    "Air Conditioning",
-    "Furniture",
-    "Appliances",
+    "HVAC",
+    "Carpentry",
+    "General repairs",
     "Other"
   ];
-
+String? urgency ;
   @override
   Widget build(BuildContext context) {
+    TextEditingController descriptionController =TextEditingController();
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
@@ -765,6 +952,7 @@ class _MaintenanceServiceModalState extends State<MaintenanceServiceModal> {
                   ),
                   SizedBox(height: 16),
                   TextField(
+                    controller: descriptionController,
                     maxLines: 5,
                     decoration: InputDecoration(
                       hintText: "Describe the issue in detail...",
@@ -799,24 +987,36 @@ class _MaintenanceServiceModalState extends State<MaintenanceServiceModal> {
                       children: [
                         RadioListTile<String>(
                           title: Text("Low - Not urgent"),
-                          value: "Low",
+                          value: "low",
                           groupValue: "Medium",
                           activeColor: Colors.blueGrey[700],
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            setState(() {
+                              urgency = value ;
+                            });
+                          },
                         ),
                         RadioListTile<String>(
                           title: Text("Medium - Needs attention soon"),
-                          value: "Medium",
+                          value: "medium",
                           groupValue: "Medium",
                           activeColor: Colors.blueGrey[700],
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            setState(() {
+                              urgency = value ;
+                            });
+                          },
                         ),
                         RadioListTile<String>(
                           title: Text("High - Urgent issue"),
-                          value: "High",
+                          value: "high",
                           groupValue: "Medium",
                           activeColor: Colors.blueGrey[700],
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            setState(() {
+                               urgency = value ;
+                            });
+                          },
                         ),
                       ],
                     ),
@@ -836,11 +1036,7 @@ class _MaintenanceServiceModalState extends State<MaintenanceServiceModal> {
             child: ElevatedButton(
               onPressed: selectedIssue != null
                   ? () {
-                // Submit maintenance request logic here
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Maintenance request submitted!")),
-                );
-                Navigator.pop(context);
+                  requestMaint();
               }
                   : null,
               style: ElevatedButton.styleFrom(
@@ -864,8 +1060,37 @@ class _MaintenanceServiceModalState extends State<MaintenanceServiceModal> {
       ),
     );
   }
-}
 
+  Future<void> requestMaint({
+
+    required String urgency,
+    required String description,
+    required String maintenance_type
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.example.com/data'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'user': "user",
+          'room': "room",
+          'urgency': urgency,
+          'description': description,
+          'maintenance_type': maintenance_type
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        // Do something with the data
+      } else {
+        print('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }}}
 // Room Service Menu Item
 class MenuItem {
   final String name;
@@ -970,4 +1195,5 @@ class MenuItemCard extends StatelessWidget {
       ),
     );
   }
+
 }

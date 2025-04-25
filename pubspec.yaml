@@ -72,6 +72,8 @@ dev_dependencies:
   http_parser: ^4.0.2   # For setting MIME types for multipart requests
   path: ^1.8.3
   path_provider: ^2.0.15
+  flutter_secure_storage: ^8.0.0
+  mobile_scanner: ^3.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

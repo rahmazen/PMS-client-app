@@ -1,8 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:clienthotelapp/providers/authProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+
+import 'api.dart';
 
 class HotelReviewPage extends StatefulWidget {
   const HotelReviewPage({Key? key}) : super(key: key);
@@ -20,35 +26,34 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
   double _rating = 1.0;
 
   // Temporary dynamic list of reviews
-  List<Map<String, dynamic>> _reviews = [
+  List<dynamic> reviews = [
     {
-      'id': '1',
-      'username': 'Sarah Johnson',
+      'id': '0',
+      'user': 'loading....',
       'userProfileImage': 'https://randomuser.me/api/portraits/women/44.jpg',
-      'description': 'Absolutely loved my stay! The room was clean and spacious with an amazing view. The staff were very friendly and helpful. Will definitely come back.',
-      'imageUrl': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      'rating': 5.0,
-      'timestamp': DateTime.now().subtract(Duration(days: 2)),
-    },
-    {
-      'id': '2',
-      'username': 'Michael Clark',
-      'userProfileImage': 'https://randomuser.me/api/portraits/men/32.jpg',
-      'description': 'Good hotel but the breakfast options could be improved. Room service was prompt and the beds were comfortable.',
-      'imageUrl': null,
-      'rating': 4.0,
-      'timestamp': DateTime.now().subtract(Duration(days: 5)),
-    },
-    {
-      'id': '3',
-      'username': 'Priya Patel',
-      'userProfileImage': 'https://randomuser.me/api/portraits/women/67.jpg',
-      'description': 'The spa facilities were amazing! Had a great time relaxing by the pool. The room was a bit small but well designed.',
-      'imageUrl': 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      'rating': 4.5,
-      'timestamp': DateTime.now().subtract(Duration(days: 7)),
+      'comment': 'loading...',
+      'image': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
+      'rating': 0.0,
+      'date': '2025-04-24T22:08:00.793Z',
     },
   ];
+
+  Future<void> fetchReview() async {
+    try {
+      final response = await http.get(Uri.parse('${Api.url}/backend/guest/reviews/'));
+
+      if (response.statusCode == 200) {
+        setState(() {
+          reviews = json.decode(response.body);
+        });
+        print(reviews);
+      } else {
+        print('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -59,7 +64,27 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
     }
   }
 
-  void _submitReview() {
+  @override
+  void initState() {
+    super.initState();
+    fetchReview();
+  }
+
+  Future<void> createReview() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userData = authProvider.authData;
+
+    if (userData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to submit a review')),
+      );
+      return;
+    }
+
+    await submitReview(userData.username);
+  }
+
+  Future<void> submitReview(String username) async {
     // Validate input
     if (_reviewController.text.trim().isEmpty && _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -73,36 +98,68 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
       _isLoading = true;
     });
 
-    // Simulate network delay
-    Future.delayed(Duration(seconds: 1), () {
-      // Create new review
-      final newReview = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'username': 'You',
-        'userProfileImage': 'https://randomuser.me/api/portraits/men/85.jpg',
-        'description': _reviewController.text,
-        'imageUrl': _selectedImage != null ? 'dummy_path_to_simulate_storage' : null,
-        'rating': _rating,
-        'timestamp': DateTime.now(),
-      };
+    try {
+      // Create multipart request
+      var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${Api.url}/backend/guest/reviews/')
+      );
 
-      // Add to reviews list
+      // Add text fields
+      request.fields['user'] = username;
+      request.fields['comment'] = _reviewController.text;
+      request.fields['rating'] = _rating.toString();
+      request.fields['date'] = DateTime.now().toIso8601String();
+
+      // Add image if selected
+      if (_selectedImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'image',
+          _selectedImage!.path,
+        ));
+      }
+
+      // Send request
+      var response = await request.send();
+
+      if (response.statusCode == 201) {
+        // Refresh reviews after successful submission
+        await fetchReview();
+
+        // Clear form
+        setState(() {
+          _reviewController.clear();
+          _selectedImage = null;
+          _rating = 5.0;
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Review posted successfully')),
+        );
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to post review: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
       setState(() {
-        _reviews.insert(0, newReview);
-        _reviewController.clear();
-        _selectedImage = null;
-        _rating = 5.0;
         _isLoading = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Review posted successfully')),
+        SnackBar(content: Text('Error posting review: $e')),
       );
-    });
+    }
   }
 
-  String _getTimeAgo(DateTime timestamp) {
-    final difference = DateTime.now().difference(timestamp);
+  String _getTimeAgo(String timestamp) {
+    DateTime dateTime = DateTime.parse(timestamp);
+    final difference = DateTime.now().difference(dateTime);
 
     if (difference.inDays > 7) {
       return '${(difference.inDays / 7).floor()} weeks ago';
@@ -117,208 +174,217 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
     }
   }
 
+  Widget _buildImagePreview() {
+    if (_selectedImage != null) {
+      return Container(
+        margin: const EdgeInsets.only(top: 8),
+        height: 100,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          image: DecorationImage(
+            image: FileImage(_selectedImage!),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Align(
+          alignment: Alignment.topRight,
+          child: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 16, color: Colors.black),
+            ),
+            onPressed: () {
+              setState(() {
+                _selectedImage = null;
+              });
+            },
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final userData = authProvider.authData;
+
     return Scaffold(
       backgroundColor: const Color(0XFFFFFFFF),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              margin: EdgeInsets.all(16),
-              elevation: 0,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            Container(
+              margin: const EdgeInsets.all(25.0),
+              child: Text(
+                'Hotel Reviews',
+                style: GoogleFonts.nunito(
+                  textStyle: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey[600],
+                  ),
+                ),
               ),
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: NetworkImage('https://randomuser.me/api/portraits/men/85.jpg'),
-                          radius: 20,
-                        ),
-                        SizedBox(width: 12),
-                       RatingBar.builder(
-                            initialRating: _rating,
-                            minRating: 1,
-                            direction: Axis.horizontal,
-                            allowHalfRating: true,
-                            itemCount: 5,
-                            itemSize: 22,
-                            itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
-                            itemBuilder: (context, _) => Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                            ),
-                            onRatingUpdate: (rating) {
-                              setState(() {
-                                _rating = rating;
-                              });
-                            },
-                          ),
+            ),
 
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    TextField(
-                      controller: _reviewController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: 'Share your experience...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.blueGrey),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.blueGrey),
-                        ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueGrey), // Change this color to your desired focus color
-                          )
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      // Avatar
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundImage: userData?.image != null
+                            ? NetworkImage('${Api.url}${userData?.image}')
+                            : const NetworkImage('https://randomuser.me/api/portraits/lego/1.jpg'),
                       ),
-                    ),
+                      const SizedBox(width: 12),
 
-                    SizedBox(height: 16),
-                    if (_selectedImage != null)
-                      Stack(
+                      // Text field
+                      Expanded(
+                        child: TextField(
+                          controller: _reviewController,
+                          decoration: InputDecoration(
+                            hintText: 'Share your experience...',
+                            hintStyle: TextStyle(color: Colors.grey.shade500),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          maxLines: null,
+                        ),
+                      ),
+
+
+                    ],
+                  ),
+
+                  // Rating bar
+
+
+                  // Selected image preview
+                  _buildImagePreview(),
+
+
+
+                  // Bottom action buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RatingBar.builder(
+                        initialRating: _rating,
+                        minRating: 1,
+                        direction: Axis.horizontal,
+                        allowHalfRating: true,
+                        itemCount: 5,
+                        itemSize: 24,
+                        itemPadding: const EdgeInsets.symmetric(horizontal: 2.0),
+                        itemBuilder: (context, _) => const Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                        ),
+                        onRatingUpdate: (rating) {
+                          setState(() {
+                            _rating = rating;
+                          });
+                        },
+                      ),
+                      Row(
                         children: [
-                          Container(
-                            width: double.infinity,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: DecorationImage(
-                                image: FileImage(_selectedImage!),
-                                fit: BoxFit.cover,
-                              ),
+                          TextButton.icon(
+                            icon: Icon(Icons.photo_outlined, color: Colors.grey.shade600),
+                            label: Text(
+                              'Add Photo',
+                              style: TextStyle(color: Colors.grey.shade600),
                             ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: CircleAvatar(
-                              radius: 16,
-                              backgroundColor: Colors.white.withOpacity(0.8),
-                              child: IconButton(
-                                icon: Icon(Icons.close, size: 16),
-                                color: Colors.black,
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedImage = null;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
                             onPressed: _pickImage,
-                            icon: Icon(Icons.image),
-                            label: Text('Add Photo'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.blueGrey,
-                              side: BorderSide(color: Colors.blueGrey),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : createReview,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                             ),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _submitReview,
                             child: _isLoading
-                                ? SizedBox(
-                              height: 20,
+                                ? const SizedBox(
                               width: 20,
+                              height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
                             )
-                                : Text('Post Review'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueGrey,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
+                                : const Text('Post'),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(child: Divider()),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Reviews',
-                      style: GoogleFonts.nunito(
-                        textStyle: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueGrey[600],
-                        ),
+                        ],
                       ),
-                    ),
+
+
+                      // Submit button
+
+                    ],
                   ),
-                  Expanded(child: Divider()),
                 ],
               ),
             ),
+
             // Reviews list
             Expanded(
               child: ListView.builder(
-                padding: EdgeInsets.only(bottom: 16),
-                itemCount: _reviews.length,
+                padding: const EdgeInsets.only(bottom: 10),
+                itemCount: reviews.length,
                 itemBuilder: (context, index) {
-                  final review = _reviews[index];
+                  final review = reviews[index];
                   return Card(
-                    margin: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                     elevation: 3,
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               CircleAvatar(
-                                backgroundImage: NetworkImage(review['userProfileImage']),
+                                backgroundImage: NetworkImage('${Api.url}${review['userProfileImage']}'),
                                 radius: 20,
                               ),
-                              SizedBox(width: 12),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      review['username'],
+                                      review['user'],
                                       style: GoogleFonts.nunito(
-                                        textStyle: TextStyle(
+                                        textStyle: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                         ),
@@ -327,7 +393,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                                     Row(
                                       children: [
                                         Text(
-                                          _getTimeAgo(review['timestamp']),
+                                          _getTimeAgo(review['date']),
                                           style: GoogleFonts.nunito(
                                             textStyle: TextStyle(
                                               color: Colors.grey[600],
@@ -335,7 +401,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Icon(Icons.public, size: 12, color: Colors.grey[600]),
                                       ],
                                     ),
@@ -353,38 +419,23 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           Text(
-                            review['description'],
+                            review['comment'],
                             style: GoogleFonts.nunito(
-                              textStyle: TextStyle(fontSize: 14),
+                              textStyle: const TextStyle(fontSize: 14),
                             ),
                           ),
-                          if (review['imageUrl'] != null) ...[
-                            SizedBox(height: 12),
+                          if (review['image'] != null) ...[
+                            const SizedBox(height: 12),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                review['imageUrl'],
+                                '${Api.url}${review['image']}',
                                 width: double.infinity,
                                 height: 200,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
-                                  // For the selected image file (which won't have a valid URL)
-                                  if (review['imageUrl'] == 'dummy_path_to_simulate_storage') {
-                                    return Container(
-                                      width: double.infinity,
-                                      height: 200,
-                                      color: Colors.blueGrey[100],
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.image,
-                                          size: 50,
-                                          color: Colors.blueGrey[300],
-                                        ),
-                                      ),
-                                    );
-                                  }
                                   return Container(
                                     width: double.infinity,
                                     height: 200,
@@ -401,37 +452,37 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                               ),
                             ),
                           ],
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Icon(Icons.thumb_up_outlined, size: 18, color: Colors.blueGrey),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
                                 'Like',
                                 style: GoogleFonts.nunito(
-                                  textStyle: TextStyle(
+                                  textStyle: const TextStyle(
                                     color: Colors.blueGrey,
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 24),
+                              const SizedBox(width: 24),
                               Icon(Icons.comment_outlined, size: 18, color: Colors.blueGrey),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
                                 'Comment',
                                 style: GoogleFonts.nunito(
-                                  textStyle: TextStyle(
+                                  textStyle: const TextStyle(
                                     color: Colors.blueGrey,
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 24),
+                              const SizedBox(width: 24),
                               Icon(Icons.share_outlined, size: 18, color: Colors.blueGrey),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
                                 'Share',
                                 style: GoogleFonts.nunito(
-                                  textStyle: TextStyle(
+                                  textStyle: const TextStyle(
                                     color: Colors.blueGrey,
                                   ),
                                 ),
@@ -445,6 +496,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                 },
               ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

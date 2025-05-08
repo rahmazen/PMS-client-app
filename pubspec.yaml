@@ -52,6 +52,7 @@ dependencies:
   table_calendar: ^3.0.9
 
   device_preview: ^1.2.0
+  mobile_scanner: ^6.0.10
   
 
 

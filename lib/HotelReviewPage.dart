@@ -224,7 +224,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
             Container(
               margin: const EdgeInsets.all(25.0),
               child: Text(
-                'Hotel Reviews',
+                'Explore',
                 style: GoogleFonts.nunito(
                   textStyle: TextStyle(
                     fontSize: 24,
@@ -235,6 +235,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
               ),
             ),
 
+            Provider.of<AuthProvider>(context , listen : true ).isAuthenticated?
             Container(
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -287,24 +288,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      RatingBar.builder(
-                        initialRating: _rating,
-                        minRating: 1,
-                        direction: Axis.horizontal,
-                        allowHalfRating: true,
-                        itemCount: 5,
-                        itemSize: 24,
-                        itemPadding: const EdgeInsets.symmetric(horizontal: 2.0),
-                        itemBuilder: (context, _) => const Icon(
-                          Icons.star,
-                          color: Colors.amber,
-                        ),
-                        onRatingUpdate: (rating) {
-                          setState(() {
-                            _rating = rating;
-                          });
-                        },
-                      ),
+
                       Row(
                         children: [
                           TextButton.icon(
@@ -349,7 +333,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                   ),
                 ],
               ),
-            ),
+            ): SizedBox.shrink(),
 
             // Reviews list
             Expanded(
@@ -408,15 +392,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                                   ],
                                 ),
                               ),
-                              Row(
-                                children: List.generate(5, (i) {
-                                  return Icon(
-                                    i < review['rating'] ? Icons.star : Icons.star_border,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  );
-                                }),
-                              ),
+
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -496,7 +472,7 @@ class _HotelReviewPageState extends State<HotelReviewPage> {
                 },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 100),
           ],
         ),
       ),

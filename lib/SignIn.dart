@@ -64,10 +64,7 @@ class _SignInScreenState extends State<SignInScreen> {
         if (mounted) {
           final data = json.decode(response.body);
           context.read<AuthProvider>().signIn(data);
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => BasePage())
-          );
+          Navigator.push(context , MaterialPageRoute(builder: (context)=>BasePage()));
 
         }
       } else {

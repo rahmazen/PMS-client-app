@@ -29,7 +29,7 @@ class _ServicesPageState extends State<ServicesPage> {
               children: [
                 // Image container
                 Container(
-                  height: 300,
+                  height: 450,
                   width: double.infinity,
                   child: Image.network(
                     '${Api.url}${widget.service['image']}',
@@ -103,7 +103,7 @@ class _ServicesPageState extends State<ServicesPage> {
             ),
 
             const SizedBox(height: 16.0),
-            const Divider(),
+            //const Divider(),
           ],
         ) :Center(
           child: Column(

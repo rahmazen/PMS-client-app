@@ -17,7 +17,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'BookingHistoryPage.dart';
-import 'QRpage.dart';
+
+import 'QrScannerPage.dart';
 import 'RestaurantPage.dart';
 import 'ServiceDetailPage.dart';
 import 'Services.dart';
@@ -27,35 +28,60 @@ import 'HotelRoom.dart';
 import 'package:provider/provider.dart';
 import 'providers/authProvider.dart';
 import 'providers/roomProvider.dart';
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'EnhancedNotificationPage.dart';
+import 'NotificationProvider.dart';
 
-void main() {
-  runApp(const MyApp());
+
+void main() async{
+ // WidgetsFlutterBinding.ensureInitialized();
+
+  runApp(
+    DevicePreview(
+      enabled: !kReleaseMode, // enables only in debug/profile mode
+      builder: (context) => const MyApp(),
+    ),
+  );
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context)  {
-     return MultiProvider(
-        providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-   // ChangeNotifierProvider(create: (_) => RoomProvider()),
+
+
+@override
+Widget build(BuildContext context) {
+  return  MultiProvider(
+    providers: [
+
+      ChangeNotifierProvider(create: (_) => AuthProvider()),
+      // ChangeNotifierProvider(create: (_) => RoomProvider()),
+      ChangeNotifierProvider(create: (_) => NotificationProvider()),
     ],
     child: GetMaterialApp(
+      useInheritedMediaQuery: true,
+      builder: DevicePreview.appBuilder,
+      locale: DevicePreview.locale(context),
       debugShowCheckedModeBanner: false,
       title: 'Hotel App',
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          color: Colors.white,
+        ),
+        colorScheme: const ColorScheme.light(
+          primary: Colors.white,
+        ),
         textTheme: GoogleFonts.nunitoTextTheme(
-          Theme.of(context).textTheme
-        )
+          Theme.of(context).textTheme,
+        ),
+        scaffoldBackgroundColor: Colors.white,
       ),
-      home: BasePage()
+      home: BasePage(),
     ),
-    );
-  }
+  );
 }
-
-/////  RoomDetailScreen(
-//         room:staticRoom)
+}

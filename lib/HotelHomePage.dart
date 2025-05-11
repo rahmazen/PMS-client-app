@@ -1,5 +1,6 @@
 import 'package:clienthotelapp/NewBookingPage.dart';
 import 'package:clienthotelapp/SignIn.dart';
+import 'package:clienthotelapp/websocket/Notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -8,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'dart:convert';
 import 'package:http/http.dart' as http ;
+import 'EnhancedNotificationPage.dart';
+import 'HotelDetailsPage.dart';
 import 'RestaurantPage.dart';
 import 'RoomListingPage.dart';
 import 'ServiceDetailPage.dart';
@@ -210,7 +213,6 @@ Future<void> fetchFacilities() async {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -308,10 +310,10 @@ Future<void> fetchFacilities() async {
                               ),
                               child: GestureDetector(
                                 onTap: () {
-                                  // Navigate to EditProfilePage
+                                  //Navigate to EditProfilePage
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => SignInScreen()),
+                                    MaterialPageRoute(builder: (context) => NotificationsWrapper()),
                                   );
                                 },
                                 child: Center(
@@ -413,12 +415,12 @@ Future<void> fetchFacilities() async {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildQuickAction(context ,Icons.hotel, "Rooms", Colors.blueGrey , () =>RoomListingPage(rooms)),
                     _buildQuickAction(context ,Icons.restaurant, "Dining", Colors.blueGrey, () =>RestaurantPage()),
-                    _buildQuickAction(context ,Icons.spa, "Spa", Colors.blueGrey, () =>RestaurantPage()),
-                    _buildQuickAction(context, Icons.nature_people_rounded, "Garden", Colors.blueGrey, () =>RestaurantPage()),
+                    _buildQuickAction(context ,Icons.houseboat_outlined, "Hotel", Colors.blueGrey, () =>HotelDetailPage()),
                   ],
                 ),
               ),
@@ -569,6 +571,33 @@ Future<void> fetchFacilities() async {
                           ),
                         ),
                       ),
+                      Positioned(
+                        bottom : 15,
+                        right:30 ,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: GestureDetector(
+                            onTap: (){
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => RoomBookingPage()),
+                              );
+                            },
+                            child: Text(
+                              "Book Now",
+                              style: GoogleFonts.nunito(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueGrey.shade800,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                       //////////weekend special ////////////
                       Padding(
                         padding: const EdgeInsets.all(20.0),
@@ -587,7 +616,7 @@ Future<void> fetchFacilities() async {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                                "4000 DZD Only on All Inclusive",
+                                "4000 DZD only on all Inclusive",
                               style: GoogleFonts.nunito(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -595,29 +624,7 @@ Future<void> fetchFacilities() async {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: GestureDetector(
-                                onTap: (){
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => RoomBookingPage()),
-                                  );
-                                },
-                                child: Text(
-                                  "Book Now",
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blueGrey.shade800,
-                                  ),
-                                ),
-                              ),
-                            ),
+
                           ],
                         ),
                       ),

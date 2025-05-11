@@ -342,35 +342,6 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
 
                       SizedBox(height: 40),
 
-                       // Book now button
-                      Container(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Booking functionality
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Booking functionality coming soon!'))
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueGrey.shade700,
-                            foregroundColor: Colors.white,
-                            elevation: 2,
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Book Now',
-                            style: GoogleFonts.nunito(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-
                       SizedBox(height: 20),
                     ],
                   ),

@@ -4,6 +4,7 @@ import 'package:clienthotelapp/ProfilePage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'HotelReviewPage.dart';
+import 'QrScannerPage.dart';
 import 'Services.dart';
 
 class BasePage extends StatefulWidget {
@@ -103,7 +104,7 @@ class _BasePageState extends State<BasePage> {
                   // Right section
                   Row(
                     children: [
-                      buildNavItem(2, Icons.star_rounded, Icons.star_rounded, 'Reviews'),
+                      buildNavItem(2, Icons.star_rounded, Icons.search, 'Explore'),
                       const SizedBox(width: 30),
                       buildNavItem(3, Icons.person, Icons.person, 'Profile'),
                     ],
@@ -139,16 +140,6 @@ class _BasePageState extends State<BasePage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-
-class FavoritesPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Favorites Page'),
     );
   }
 }

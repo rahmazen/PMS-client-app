@@ -166,42 +166,147 @@ class _RestaurantPageState extends State<RestaurantPage> {
       cart.clear();
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : errorMessage.isNotEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              errorMessage,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: fetchMenuItems,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      )
+          : SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Back button
-            GestureDetector(
-              onTap:() => Navigator.of(context).pop(),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(Icons.arrow_back_ios_rounded, color: Colors.blueGrey[600]),
-                    const SizedBox(width: 5),
-                    Text('Back',
-                        style: GoogleFonts.nunito(
-                            color: Colors.blueGrey[600],
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold)),
-                  ],
+            // Restaurant header image
+            Container(
+              height: 400,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/hotel_3.jfif'),
+                  fit: BoxFit.cover,
                 ),
+              ),
+              child: Stack(
+                children: [
+                  const SizedBox(height: 10.0),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.arrow_back_ios_rounded, color: Colors.blueGrey[600]),
+                          const SizedBox(width: 5),
+                          Text('Back',
+                              style: GoogleFonts.nunito(
+                                  color: Colors.blueGrey[600],
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.blueGrey[900]!.withOpacity(0.8),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome ',
+                          style: TextStyle(
+                            color: Colors.blueGrey[50],
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'What are you craving ?',
+                          style: TextStyle(
+                            color: Colors.blueGrey[100],
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Hello!\nWhat are you craving today?',
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF646E7A)),
+            // About section
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'About',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Row(
+                    children: List.generate(5, (i) {
+                      return Icon(
+                        i < 4 ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 18,
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "The signature dining experience at our hotel. Blending elegant ambiance with a relaxed atmosphere, The Palms offers a carefully curated menu featuring international cuisine with a local twist. Whether you're starting your day with a hearty breakfast, enjoying a casual lunch, or savoring a candlelit dinner",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blueGrey.shade700,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Menu',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -249,46 +354,31 @@ class _RestaurantPageState extends State<RestaurantPage> {
               ),
             ),
 
-            // Menu Items or Loading/Error state
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : errorMessage.isNotEmpty
-                  ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      errorMessage,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: fetchMenuItems,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              )
-                  : filteredItems.isEmpty
-                  ? const Center(
+            // Menu Items
+            filteredItems.isEmpty
+                ? const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
                 child: Text('No items found in this category'),
-              )
-                  : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: filteredItems.length, // Simply use the total count
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: _buildMenuItemCard(filteredItems[index]),
-                  );
-                },
               ),
+            )
+                : ListView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(16),
+              itemCount: filteredItems.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _buildMenuItemCard(filteredItems[index]),
+                );
+              },
             ),
           ],
         ),
       ),
+
+      // Uncomment this to re-enable your bottom navigation bar
       /*
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -367,11 +457,9 @@ class _RestaurantPageState extends State<RestaurantPage> {
           ],
         ),
       ),
-
-       */
+      */
     );
   }
-
   void _showCartModal(BuildContext context) {
     showModalBottomSheet(
       context: context,

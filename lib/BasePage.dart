@@ -104,7 +104,7 @@ class _BasePageState extends State<BasePage> {
                   // Right section
                   Row(
                     children: [
-                      buildNavItem(2, Icons.star_rounded, Icons.search, 'Explore'),
+                      buildNavItem(2, Icons.search, Icons.search, 'Explore'),
                       const SizedBox(width: 30),
                       buildNavItem(3, Icons.person, Icons.person, 'Profile'),
                     ],

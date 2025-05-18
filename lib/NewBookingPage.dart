@@ -211,6 +211,7 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            SizedBox(height: 50) ,
             Container(
               margin: EdgeInsets.only(left: 30, top: 20),
               child: Container(
@@ -769,19 +770,11 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
                                           ),
                                         ),
                                         Text(
-                                          '\$${double.parse(room['price']).toStringAsFixed(2)}',
+                                          '${double.parse(room['price']).toStringAsFixed(2)} DZD',
                                           style: GoogleFonts.nunito(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.blueGrey[700],
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          room['description'] ?? 'No description available',
-                                          style: GoogleFonts.nunito(
-                                            fontSize: 14,
-                                            color: Colors.blueGrey[600],
                                           ),
                                         ),
                                         const SizedBox(height: 8),

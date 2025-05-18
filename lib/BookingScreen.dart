@@ -103,7 +103,7 @@ class _BookingScreenState extends State<BookingScreen> {
       Future.microtask(() {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => SignInScreen()),
+          MaterialPageRoute(builder: (context) => SignInScreen(redirectToPage: BookingScreen(widget.selectedRoomType , widget.checkInDate , widget.checkOutDate , widget.selectedRoomPrice , widget.adults , widget.selectedMealPlan),)),
         );
       });
       return SizedBox();
@@ -125,7 +125,9 @@ class _BookingScreenState extends State<BookingScreen> {
                 Row(
                   children: [
                     IconButton( onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) =>RoomBookingPage()),);
                     } ,
                       icon: Icon(Icons.arrow_back_ios),
                       color: Colors.blueGrey[600],
@@ -322,12 +324,10 @@ class _BookingScreenState extends State<BookingScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('EDAHABIA ****4325',
+                              Text('EDAHABIA',
                                 style: GoogleFonts.nunito(fontWeight: FontWeight.bold),
                               ),
-                              Text('Exp: 26/04/27',
-                                style: GoogleFonts.nunito(color: Colors.grey, fontSize: 12),
-                              ),
+
                             ],
                           ),
                           const Spacer(),
@@ -351,12 +351,10 @@ class _BookingScreenState extends State<BookingScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('CIB  ****0087',
+                              Text('CIB',
                                 style: GoogleFonts.nunito(fontWeight: FontWeight.bold),
                               ),
-                              Text('Exp: 12/01/25',
-                                style: GoogleFonts.nunito(color: Colors.grey, fontSize: 12),
-                              ),
+
                             ],
                           ),
                           const Spacer(),

@@ -164,7 +164,7 @@ class _NotificationsWrapperState extends State<NotificationsWrapper> {
           setState(() => _redirecting = true);
           await Future.delayed(Duration.zero); // Ensure build completes
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => SignInScreen()),
+            MaterialPageRoute(builder: (context) => SignInScreen(redirectToPage: NotificationsWrapper(),)),
           );
         }
         return;

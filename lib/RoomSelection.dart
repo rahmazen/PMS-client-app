@@ -60,7 +60,7 @@ class _RoomSelectionScreenState extends State<RoomSelectionScreen> {
           Container(
             margin: EdgeInsets.only(left: 15),
 
-            child: Text('hola choose ur room', style: GoogleFonts.nunito(),),
+            child: Text('choose ur room', style: GoogleFonts.nunito(),),
 
           ),
           SizedBox(height: 20,),

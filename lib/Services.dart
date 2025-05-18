@@ -68,7 +68,10 @@ class _ClientRoomPageState extends State<ClientRoomPage> {
   String meal_plan  = 'RO';
   Future<void>fetchReservation() async{
 
-    final reservationId = await ReservationStorage.getReservationId();
+    final reservation = await ReservationStorage.getReservationId();
+    setState(() {
+      reservationId =reservation ;
+    });
     print('we are in fetch reservation ');
     print('reservation id reteived from reservationstorage is ${reservationId}');
     if (reservationId == null) {
@@ -82,7 +85,7 @@ class _ClientRoomPageState extends State<ClientRoomPage> {
       return;
     }
     try {
-      final response = await http.get(Uri.parse('${Api.url}/backend/receptionist/ManageReservation/${reservationId}'));
+      final response = await http.get(Uri.parse('${Api.url}/backend/receptionist/ManageReservation/${reservationId}/'));
 
       print('response of get request ${response.body}');
       if (response.statusCode == 200) {
@@ -155,8 +158,10 @@ class _ClientRoomPageState extends State<ClientRoomPage> {
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
+
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            SizedBox(height : 20),
             GestureDetector(
               onTap: () => Navigator.pushReplacement(
                 context,
@@ -209,90 +214,121 @@ class _ClientRoomPageState extends State<ClientRoomPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-
-                        /*
                         Text(
-                          roomType,
+                          "Welcome to your room",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.blueGrey[400],
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Standard',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.blueGrey[800],
                           ),
                         ),
-
-                         */
                         SizedBox(height: 4),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
                         Row(
                           children: [
-
-                            const SizedBox(width: 5),
-                            SmallToggleSwitch(
-                              value: isCleaningRequested,
-                              onToggle: (value) {
-                                setState(() {
-                                  isCleaningRequested = value;
-                                });
-                              },
-                              activeColor: Colors.blue[100],
-                              icon: Icons.cleaning_services,
-                              message : 'requestCleaning',
-                              room: roomNumber
-                            ),
-
-                            const SizedBox(width: 10),
-                            const Text(
-                              "Request Cleaning",
+                            Icon(Icons.wifi, size: 16, color: Colors.blueGrey[600]),
+                            SizedBox(width: 6),
+                            Text(
+                              "Free Wi-Fi",
                               style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                color: Colors.blueGrey[600],
                               ),
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Do Not Disturb Toggle
-                        Row(
-                          children: [
-
-                            const SizedBox(width: 5),
-                            SmallToggleSwitch(
-                              value: isDoNotDisturb,
-                              onToggle: (value) {
-                                setState(() {
-                                  isDoNotDisturb = value;
-                                });
-                              },
-                              activeColor: Colors.red[200],
-                              icon: Icons.do_not_disturb_on,
-                                message : 'doNotDisturb',
-                                room: roomNumber
-                            ),
-
-                            const SizedBox(width: 10),
-                            const Text(
-                              "Do Not Disturb",
+                            SizedBox(width: 12),
+                            Icon(Icons.ac_unit, size: 16, color: Colors.blueGrey[600]),
+                            SizedBox(width: 6),
+                            Text(
+                              "Climate Control",
                               style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w400,
+                                color: Colors.blueGrey[600],
                               ),
                             ),
-                          ],
-                        ),
                           ],
                         ),
                       ],
                     ),
                   ),
                 ],
-
               ),
             ),
 
+            // Room details
+
+
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Row(
+                  children: [
+
+                    const SizedBox(width: 5),
+                    SmallToggleSwitch(
+                        value: isCleaningRequested,
+                        onToggle: (value) {
+                          setState(() {
+                            isCleaningRequested = value;
+                          });
+                        },
+                        activeColor: Colors.blue[100],
+                        icon: Icons.cleaning_services,
+                        message : 'requestCleaning',
+                        room: roomNumber
+                    ),
+
+                    const SizedBox(width: 10),
+                    const Text(
+                      "Request Cleaning",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Do Not Disturb Toggle
+                Row(
+                  children: [
+
+                    const SizedBox(width: 5),
+                    SmallToggleSwitch(
+                        value: isDoNotDisturb,
+                        onToggle: (value) {
+                          setState(() {
+                            isDoNotDisturb = value;
+                          });
+                        },
+                        activeColor: Colors.red[200],
+                        icon: Icons.do_not_disturb_on,
+                        message : 'doNotDisturb',
+                        room: roomNumber
+                    ),
+
+                    const SizedBox(width: 10),
+                    const Text(
+                      "Do Not Disturb",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height : 20) ,
             // Services Section
             Padding(
               padding: EdgeInsets.only(left: 8, bottom: 16),
@@ -791,17 +827,31 @@ class _RoomServiceModalState extends State<RoomServiceModal> {
         }
       });
 
+      // Create the request body
+      final requestBody = {
+        'reservation': widget.reservationId,
+        'items': items,
+        'instructions': instructionsController.text,
+        'total_amount': calculateTotal(widget.meal_plan)
+      };
+
+      // Print the exact JSON data being sent to the API
+      print('====================== REQUEST DATA ======================');
+      print(const JsonEncoder.withIndent('  ').convert(requestBody));
+      print('=========================================================');
+
       // Send the request
       final response = await http.post(
         Uri.parse('${Api.url}/backend/guest/order/'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'reservation': widget.reservationId,
-          'items': items,
-          'instructions': instructionsController.text,
-          'total_amount' : calculateTotal(widget.meal_plan)
-        }),
+        body: json.encode(requestBody),
       );
+
+      // Log response details
+      print('====================== RESPONSE DATA =====================');
+      print('Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      print('=========================================================');
 
       setState(() {
         isSubmitting = false;
@@ -819,9 +869,14 @@ class _RoomServiceModalState extends State<RoomServiceModal> {
         // Close the modal
         Navigator.pop(context);
       } else {
-        // Show error message
-        final data = json.decode(response.body);
-        String errorMsg = data['error'] ?? 'Failed to place order';
+        // Show error message with response details
+        String errorMsg = "Failed to place order";
+        try {
+          final data = json.decode(response.body);
+          errorMsg = data['error'] ?? errorMsg;
+        } catch (e) {
+          errorMsg = "Response error: ${response.statusCode}";
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -835,6 +890,7 @@ class _RoomServiceModalState extends State<RoomServiceModal> {
         isSubmitting = false;
       });
 
+      print('Exception during order placement: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error: $e"),
@@ -909,7 +965,7 @@ class DynamicMenuItemCard extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  "\$${price.toStringAsFixed(2)}",
+                  "${price.toStringAsFixed(2)} DZD",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

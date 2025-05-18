@@ -1,18 +1,16 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'BasePage.dart';
 import 'ReservationStorage.dart';
 import 'Services.dart';
 import 'api.dart';
-
-// Import the ReservationStorage class from the file you created
 
 class QRCodeScanPage extends StatefulWidget {
   const QRCodeScanPage({Key? key}) : super(key: key);
@@ -23,12 +21,16 @@ class QRCodeScanPage extends StatefulWidget {
 
 class _QRCodeScanPageState extends State<QRCodeScanPage> {
   final TextEditingController reservationIdController = TextEditingController();
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? controller;
-  bool isScanning = false;
   bool isLoading = false;
   bool isCheckingStorage = true; // Flag for initial storage check
   String? errorMessage;
+
+  // Mobile Scanner controller
+  final MobileScannerController _mobileScannerController = MobileScannerController(
+    facing: CameraFacing.back,
+    torchEnabled: false,
+  );
+  bool _isScanning = false;
 
   @override
   void initState() {
@@ -38,6 +40,58 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
       _checkStoredReservation();
     });
   }
+
+  @override
+  void dispose() {
+    _mobileScannerController.dispose();
+    reservationIdController.dispose();
+    super.dispose();
+  }
+
+  void _startScanning() {
+    setState(() {
+      _isScanning = true;
+    });
+  }
+
+  void _stopScanning() {
+    setState(() {
+      _isScanning = false;
+    });
+  }
+
+  void toggleScanner() {
+    setState(() {
+      _isScanning = !_isScanning;
+    });
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
+      if (barcode.rawValue != null) {
+        _stopScanning();
+        // Process the QR code data
+        final String code = barcode.rawValue!;
+        print('QR Code detected: $code');
+        /////////////////////// Handle reservation access with the scanned code///////////////////////////////////
+
+          final cleanedCode = code.trim().replaceAll('\uFEFF', '');
+          final Map<String, dynamic> data = json.decode(cleanedCode);
+
+          print('code decoded  $data');
+          final reservationId = data['reservationId'];
+          print('reservation id :  $reservationId');
+          if (reservationId != null) {
+            handleReservationAccess(reservationId.toString());
+          } else {
+            showErrorMessage('Invalid QR code: missing reservationId');
+          }
+
+      }
+    }
+  }
+
   Future<void> _checkStoredReservation() async {
     setState(() {
       isCheckingStorage = true;
@@ -83,48 +137,6 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     }
   }
 
-  @override
-  void dispose() {
-    controller?.dispose();
-    reservationIdController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    if (controller != null) {
-      controller!.pauseCamera();
-      controller!.resumeCamera();
-    }
-  }
-
-  void onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      controller.pauseCamera();
-      setState(() {
-        isScanning = false;
-      });
-
-      if (scanData.code != null) {
-        handleReservationAccess(scanData.code!);
-      } else {
-        showErrorMessage('Invalid QR code');
-        controller.resumeCamera();
-      }
-    });
-  }
-
-  void toggleScanner() {
-    setState(() {
-      isScanning = !isScanning;
-      if (!isScanning && controller != null) {
-        controller!.pauseCamera();
-      }
-    });
-  }
-
   void handleManualInput() {
     final reservationId = reservationIdController.text.trim();
     if (reservationId.isEmpty) {
@@ -134,7 +146,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     handleReservationAccess(reservationId);
   }
 
-  Future<void> handleReservationAccess(String reservationId, {  bool checkStoredDataFirst = true  }) async {
+  Future<void> handleReservationAccess(String reservationId, {bool checkStoredDataFirst = true}) async {
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -199,11 +211,10 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     }
   }
 
-
   Future<Map<String, dynamic>?> fetchReservation(String reservationId) async {
     try {
       final response = await http.get(
-          Uri.parse('${Api.url}/backend/receptionist/ManageReservation/$reservationId')
+          Uri.parse('${Api.url}/backend/receptionist/ManageReservation/$reservationId/')
       );
 
       if (response.statusCode == 200) {
@@ -252,8 +263,6 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     setState(() {
       errorMessage = message;
     });
-
-
   }
 
   @override
@@ -269,7 +278,6 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -283,21 +291,18 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.arrow_back_ios_rounded, color: Colors.blueGrey[600], ),
-                    SizedBox(width:5 ),
+                    Icon(Icons.arrow_back_ios_rounded, color: Colors.blueGrey[600]),
+                    SizedBox(width: 5),
                     Text('Back', style: GoogleFonts.nunito(color: Colors.blueGrey[600], fontSize: 14, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
               Column(
-
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-
                   // QR Scanner Card
                   Container(
                     width: double.infinity,
-
                     child: Column(
                       children: [
                         const Text(
@@ -319,106 +324,100 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                         const SizedBox(height: 24),
 
                         // QR Code Scanner
-                        isScanning
-                            ?
-                            // Container for the border frame
-
-
-                            // QR Scanner that expands beyond the container
-                            Container(
-                              height: 200, // Make larger than container to ensure full coverage
-                              width: 200,
-
-                              child: Center(
-                                child: QRView(
-                                  key: qrKey,
-                                  onQRViewCreated: onQRViewCreated,
-                                  overlay: QrScannerOverlayShape(
-                                    borderColor: Colors.blueGrey.shade600,
-                                    borderRadius: 10,
-                                    borderLength: 30,
-                                    borderWidth: 5,
-                                    cutOutSize: 200, // Slightly smaller than container
-                                  ),
-                                ),
-                              ),
-                            )
-
-                            // Optional semi-transparent overlay to show scanning area
-
-
-                            : Container(
+                        Container(
                           width: 200.0,
                           height: 200.0,
+                          /*
                           decoration: BoxDecoration(
-                          ),
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: Icon(
-                                  Icons.qr_code_2_rounded,
-                                  size: 150.0,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              // Corner indicators
-                              Positioned(
-                                top: 0,
-                                left: 0,
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      top: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                      left: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                    ),
+                            border: _isScanning ? null : Border.all(
+                              color: Colors.blueGrey.shade600,
+                              width: 2.0,
+                            ),
+                          ), */
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Stack(
+                              children: [
+                                // Show mobile scanner when scanning
+                                if (_isScanning)
+                                  MobileScanner(
+                                    controller: _mobileScannerController,
+                                    onDetect: _onDetect,
+                                    fit: BoxFit.cover,
                                   ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      top: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                      right: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                    ),
+
+                                // Show QR code icon when not scanning
+                                if (!_isScanning)
+                                  Stack(
+                                    children: [
+                                      Center(
+                                        child: Icon(
+                                          Icons.qr_code_2_rounded,
+                                          size: 180.0,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      // Corner indicators
+                                      Positioned(
+                                        top: 0,
+                                        left: 0,
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              top: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                              left: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 0,
+                                        right: 0,
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              top: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                              right: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        left: 0,
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              bottom: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                              left: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              bottom: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                              right: BorderSide(color: Colors.blueGrey.shade600, width: 3),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                      left: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                      right: BorderSide(color: Colors.blueGrey.shade600, width: 3),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 32.0),
@@ -450,7 +449,7 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                             child: isLoading
                                 ? const CircularProgressIndicator(color: Colors.white)
                                 : Text(
-                              isScanning ? 'CANCEL' : 'SCAN',
+                              _isScanning ? 'STOP' : 'SCAN',
                               style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -516,7 +515,6 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
                             color: Colors.blueGrey.shade600,
                             size: 18.0,
                           ),
-
                           onPressed: isLoading ? null : handleManualInput,
                         ),
                       ),

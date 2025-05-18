@@ -190,24 +190,8 @@ class RoomCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (room.isOccupied)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.red[100],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Occupied',
-                            style: GoogleFonts.nunito(
-                              textStyle: TextStyle(
-                                fontSize: 12,
-                                color: Colors.red[800],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
+
+
                     ],
                   ),
                   SizedBox(height: 4),

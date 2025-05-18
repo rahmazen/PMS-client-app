@@ -184,8 +184,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Form(
       key: _firstFormKey,
       child: Column(
+
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(height: 50) ,
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Row(

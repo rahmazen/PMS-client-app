@@ -12,7 +12,9 @@ import 'package:http/http.dart' as http;
 import 'api.dart';
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({Key? key}) : super(key: key);
+  final Widget? redirectToPage; // New parameter to store the page to redirect to
+
+  const SignInScreen({Key? key, this.redirectToPage}) : super(key: key);
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -64,13 +66,23 @@ class _SignInScreenState extends State<SignInScreen> {
         if (mounted) {
           final data = json.decode(response.body);
           context.read<AuthProvider>().signIn(data);
-          Navigator.push(context , MaterialPageRoute(builder: (context)=>BasePage()));
+          if (widget.redirectToPage != null) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => widget.redirectToPage!),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => BasePage()), 
+            );
+          }
 
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login failed: ${response.statusCode}')),
+            SnackBar(content: Text('password or username incorrect ,try again ')),
           );
         }
       }
@@ -80,7 +92,7 @@ class _SignInScreenState extends State<SignInScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Failed connecting to the server, check your network and try again .')),
         );
       }
     }
@@ -97,10 +109,12 @@ class _SignInScreenState extends State<SignInScreen> {
         child: Padding(
           padding: EdgeInsets.all(screenWidth * 0.05),
           child: Column(
+
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              SizedBox(height: 50),
               GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.push(context , MaterialPageRoute(builder:   (context) =>BasePage())),
                 child: Row(
                   children: [
                     Icon(Icons.arrow_back_ios_rounded, color: Colors.blueGrey[600], size: screenWidth * 0.05),

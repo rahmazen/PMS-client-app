@@ -1,15 +1,18 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:clienthotelapp/providers/authProvider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'BasePage.dart';
 import 'ReservationStorage.dart';
 import 'Services.dart';
+import 'SignIn.dart';
 import 'api.dart';
 
 class QRCodeScanPage extends StatefulWidget {
@@ -39,6 +42,15 @@ class _QRCodeScanPageState extends State<QRCodeScanPage> {
     ReservationStorage.checkAndClearExpiredReservation().then((_) {
       _checkStoredReservation();
     });
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (auth.authData == null) {
+      Future.microtask(() {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) =>  SignInScreen(redirectToPage: QRCodeScanPage())),
+        );
+      });
+    }
   }
 
   @override
